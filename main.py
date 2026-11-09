@@ -1,9 +1,7 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from langchain_core.messages import HumanMessage, AIMessage
-from langchain_openai import ChatOpenAI
-from chat_agent import _build_chat_agent
-from classification_agent import classification_chain, TextClassification
+from chat_agent import _build_chat_agent, _build_classification_chain, TextClassification
 
 load_dotenv()
 app = FastAPI()
@@ -15,17 +13,11 @@ def hello():
 
 @app.post("/chat")
 async def chat(payload: dict):
-    input_text = payload.get("message", "")
-    result = classification_chain.invoke({
-        "text": input_text,
-        "json_schema": TextClassification.model_json_schema()
-    })
-    print(result)
-    
-    agent = _build_chat_agent()
+    message = payload.get("message", "")
+
+    agent = _build_chat_agent(message)
 
     # Extract the user's message and conversation history from the payload
-    message = payload.get("message", "")
     history = payload.get("history", [])
     messages = []
     for turn in history:
