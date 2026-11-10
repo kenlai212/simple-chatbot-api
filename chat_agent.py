@@ -147,13 +147,14 @@ def _build_chat_agent(inputText):
         print("Agent already built, reusing existing agent.")
         return _chat_agent
 
-    prompt_path = Path(__file__).parent / "system_prompt.md"
-    system_prompt = prompt_path.read_text().strip()
+    # Read the chat system prompt from the markdown file
+    chat_prompt_path = Path(__file__).parent / "chat_system_prompt.md"
+    chat_system_prompt = chat_prompt_path.read_text().strip()
 
     _chat_agent = create_agent(
         model=get_llm(),
         tools=tools,
-        system_prompt=system_prompt,
+        system_prompt=chat_system_prompt,
     )
 
     return _chat_agent
@@ -166,17 +167,20 @@ def _build_classification_chain():
     # Bind the Pydantic schema to the model using structured output
     structured_llm = get_llm().with_structured_output(TextClassification, method="json_mode")
 
+    # Read the chat system prompt from the markdown file
+    classification_prompt_path = Path(__file__).parent / "classification_system_prompt.md"
+    classification_system_prompt = classification_prompt_path.read_text().strip()
+    
     # Create a prompt template
-    prompt = ChatPromptTemplate.from_messages([
+    classification_prompt = ChatPromptTemplate.from_messages([
         (
-            "system",
-            "You are a text classification agent. Analyze the incoming text and classify into one of the following categories: team_structure, enterprise_architecture, insurance_products, design_theme, general_inquiry. You must always respond with a valid JSON object matching this schema: {json_schema}"
+            "system", classification_system_prompt
         ),
         ("user", "{text}")
     ])
 
     # Combine the prompt template and structured LLM into a classification chain
-    _classification_chain = prompt | structured_llm
+    _classification_chain = classification_prompt | structured_llm
     return _classification_chain
 
 
